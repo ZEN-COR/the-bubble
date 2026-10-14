@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-import { PlaceholderArt, sceneFromText } from "@/components/brand/placeholder-art";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ export function PersonCard({
   year,
   sharedTags,
   explanation,
+  icebreaker,
   portraitSrc,
   profileHref,
   actionLabel = "Connect",
@@ -27,13 +27,14 @@ export function PersonCard({
   year?: string | null;
   sharedTags: string[];
   explanation: string;
+  icebreaker?: string;
   portraitSrc?: string;
   profileHref?: string;
   actionLabel?: string;
   onAction?: () => void;
   unavailableLabel?: string;
 }) {
-  const studyLine = [degree, major, year].filter(Boolean).join(", ");
+  const studyLine = [major ?? degree, year].filter(Boolean).join(" · ");
   const initials = displayName
     .split(" ")
     .slice(0, 2)
@@ -42,15 +43,14 @@ export function PersonCard({
 
   return (
     <Card>
-      <PlaceholderArt scene={sceneFromText(sharedTags.join(" "))} />
       <CardHeader>
-        <div className="flex items-center gap-3">
-          <Avatar size="lg" className="size-11">
+        <div className="flex items-center gap-4">
+          <Avatar size="lg" className="size-20">
             {portraitSrc ? <AvatarImage src={portraitSrc} alt="" /> : null}
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div>
-            <CardTitle>
+            <CardTitle className="text-lg">
               {profileHref ? (
                 <Link href={profileHref} className="hover:underline">
                   {displayName}
@@ -73,11 +73,20 @@ export function PersonCard({
             ))}
           </ul>
         ) : null}
-        <p>{explanation}</p>
+        {explanation ? (
+          <div className="rounded-2xl bg-[#faf3df] px-3 py-3">
+            <p className="text-sm font-semibold text-[#255d43]">You&apos;ve got things in common!</p>
+            <p className="mt-1 text-sm text-muted-foreground">{explanation}</p>
+          </div>
+        ) : null}
+        {icebreaker ? (
+          <p className="text-sm text-muted-foreground">A possible hello: {icebreaker}</p>
+        ) : null}
       </CardContent>
       <CardFooter>
         <Button
           type="button"
+          className="w-full"
           disabled={!onAction}
           onClick={onAction}
           aria-describedby={onAction ? undefined : `${id}-connect-unavailable`}

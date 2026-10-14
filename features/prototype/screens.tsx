@@ -21,7 +21,6 @@ import {
   eventFilters,
   groupById,
   meetupSuggestion,
-  peopleFilters,
   personById,
   prototypeEvents,
   prototypeGroups,
@@ -144,23 +143,44 @@ export function OnboardingScreen() {
   );
 }
 
+const discoveryFilters = ["For you", "Same courses", "On campus", "Shared interests"] as const;
+const crowdTones = ["bg-[#f4ad91]/55", "bg-[#e8dafa]", "bg-[#f4d77d]/80"] as const;
+
 export function PeopleScreen() {
   const router = useRouter();
   const { people, pendingCount, relation, sendRequest } = usePrototype();
-  const [filter, setFilter] = useState<(typeof peopleFilters)[number]>("All");
+  const [filter, setFilter] = useState<(typeof discoveryFilters)[number]>("For you");
   const [query, setQuery] = useState("");
   const [requestId, setRequestId] = useState<string | null>(null);
   const requestPerson = requestId ? personById(requestId) : undefined;
 
   const visible = people.filter((person) => {
-    const matchesQuery = person.displayName.toLowerCase().includes(query.trim().toLowerCase());
-    const matchesFilter = filter === "All" || person.filters.some((item) => item === filter);
+    const haystack = [
+      person.displayName,
+      person.degree,
+      person.major,
+      person.year,
+      person.bio,
+      person.explanation,
+      ...person.tags,
+    ]
+      .join(" ")
+      .toLowerCase();
+    const matchesQuery = haystack.includes(query.trim().toLowerCase());
+    const matchesFilter =
+      filter === "For you" ||
+      (filter === "Same courses" &&
+        person.filters.some((item) => viewer.courses.some((course) => course === item))) ||
+      (filter === "On campus" &&
+        person.tags.some((tag) => viewer.campusDays.some((day) => day === tag))) ||
+      (filter === "Shared interests" &&
+        person.tags.some((tag) => viewer.interests.some((interest) => interest === tag)));
     return matchesQuery && matchesFilter;
   });
 
   return (
     <Screen
-      title="People"
+      title="Find your people"
       action={
         <Button asChild variant="outline">
           <Link href="/connections">
@@ -169,40 +189,48 @@ export function PeopleScreen() {
         </Button>
       }
     >
+      <p className="-mt-4 text-sm text-muted-foreground">
+        Good connections start somewhere. <span aria-hidden="true">✨</span>
+      </p>
       <Label htmlFor="people-search" className="sr-only">
-        Search by name
+        Search people, interests, and courses
       </Label>
       <Input
         id="people-search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="Search by name"
+        placeholder="Search people, interests, courses..."
       />
-      <FilterRow options={peopleFilters} value={filter} onChange={(value) => setFilter(value as typeof filter)} />
+      <FilterRow
+        options={discoveryFilters}
+        value={filter}
+        onChange={(value) => setFilter(value as typeof filter)}
+      />
+      <h2 className="text-base font-semibold">People you might click with</h2>
       {visible.length === 0 ? (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-muted-foreground">
-            No one matches that search. Shared courses, interests, and campus days are the only
-            filters in this prototype.
+            No one matches that search. Try a course, an interest, or a campus day, or clear the
+            filters.
           </p>
           <Button
             type="button"
             variant="secondary"
             onClick={() => {
               setQuery("");
-              setFilter("All");
+              setFilter("For you");
             }}
           >
             Clear filters
           </Button>
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
-          {visible.map((person) => {
+        <div className="flex flex-col gap-4">
+          {visible.map((person, index) => {
             const status = relation(person.id);
             return (
+              <div key={person.id} className="bubble-rise" style={{ animationDelay: `${index * 60}ms` }}>
               <PersonCard
-                key={person.id}
                 id={person.id}
                 displayName={person.displayName}
                 degree={person.degree}
@@ -210,6 +238,7 @@ export function PeopleScreen() {
                 year={person.year}
                 sharedTags={[...person.tags]}
                 explanation={person.explanation}
+                icebreaker={status === "none" ? person.starter : undefined}
                 portraitSrc={portraitUrl(person.portrait)}
                 profileHref={`/people/${person.id}`}
                 actionLabel={
@@ -219,7 +248,7 @@ export function PeopleScreen() {
                       ? "Requested"
                       : status === "incoming"
                         ? "Respond"
-                        : "Connect"
+                        : "Say hello"
                 }
                 unavailableLabel={
                   status === "sent" ? "Request already sent." : undefined
@@ -234,10 +263,32 @@ export function PeopleScreen() {
                         : () => setRequestId(person.id)
                 }
               />
+              </div>
             );
           })}
         </div>
       )}
+      <section className="flex flex-col gap-3" aria-labelledby="crowd-heading">
+        <div>
+          <h2 id="crowd-heading" className="text-base font-semibold">
+            Find your crowd
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Groups already in this prototype. These are not live club memberships.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {prototypeGroups.map((group, index) => (
+            <Link
+              key={group.id}
+              href={`/groups/${group.id}`}
+              className={`flex min-h-28 flex-col justify-end rounded-[22px] p-3 text-sm font-semibold text-[#25332c] ${crowdTones[index % crowdTones.length]}`}
+            >
+              {group.name}
+            </Link>
+          ))}
+        </div>
+      </section>
       {requestPerson ? (
         <RequestDialog
           recipientName={requestPerson.displayName}
@@ -302,7 +353,7 @@ export function PersonScreen({ id }: { id: string }) {
           </Button>
         ) : (
           <Button type="button" onClick={() => setRequestOpen(true)}>
-            Connect
+            Say hello
           </Button>
         )}
         <Button type="button" variant="outline" onClick={() => setReportOpen(true)}>
