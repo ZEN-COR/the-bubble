@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { PlaceholderArt, sceneFromText } from "@/components/brand/placeholder-art";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,6 +14,7 @@ export function PersonCard({
   year,
   sharedTags,
   explanation,
+  portraitSrc,
   profileHref,
   actionLabel = "Connect",
   onAction,
@@ -26,6 +27,7 @@ export function PersonCard({
   year?: string | null;
   sharedTags: string[];
   explanation: string;
+  portraitSrc?: string;
   profileHref?: string;
   actionLabel?: string;
   onAction?: () => void;
@@ -44,6 +46,7 @@ export function PersonCard({
       <CardHeader>
         <div className="flex items-center gap-3">
           <Avatar size="lg" className="size-11">
+            {portraitSrc ? <AvatarImage src={portraitSrc} alt="" /> : null}
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
           <div>

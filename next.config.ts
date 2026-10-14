@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
   output: "export",
   trailingSlash: true,
   ...(pagesBase ? { basePath: pagesBase, assetPrefix: pagesBase } : {}),
+  env: {
+    NEXT_PUBLIC_BASE_PATH: pagesBase,
+  },
   experimental: {
     staticGenerationMinPagesPerWorker: 100,
   },

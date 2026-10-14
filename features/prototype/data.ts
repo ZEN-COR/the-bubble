@@ -1,16 +1,19 @@
 export const viewer = {
+  displayName: "Alex Reed",
   degree: "BSc",
   major: "Computer Science",
   year: "2nd year",
   courses: ["COMP261"],
   interests: ["Algorithms"],
   campusDays: ["Monday", "Tuesday"],
+  portrait: "alex.jpg",
 };
 
 export const prototypePeople = [
   {
     id: "11111111-1111-4111-8111-111111111111",
     displayName: "Avery Chen",
+    portrait: "avery.jpg",
     degree: "BSc",
     major: "Computer Science",
     year: "2nd year",
@@ -23,6 +26,7 @@ export const prototypePeople = [
   {
     id: "22222222-2222-4222-8222-222222222222",
     displayName: "Jordan Blake",
+    portrait: "jordan.jpg",
     degree: "BSc",
     major: "Computer Science",
     year: "2nd year",
@@ -35,6 +39,7 @@ export const prototypePeople = [
   {
     id: "66666666-6666-4666-8666-666666666666",
     displayName: "Casey Morgan",
+    portrait: "casey.jpg",
     degree: "BCom",
     major: "Information Systems",
     year: "3rd year",

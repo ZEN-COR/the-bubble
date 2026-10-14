@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import { PlaceholderArt, sceneFromText } from "@/components/brand/placeholder-art";
+import { portraitUrl } from "@/lib/portraits";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -209,6 +210,7 @@ export function PeopleScreen() {
                 year={person.year}
                 sharedTags={[...person.tags]}
                 explanation={person.explanation}
+                portraitSrc={portraitUrl(person.portrait)}
                 profileHref={`/people/${person.id}`}
                 actionLabel={
                   status === "connected"
@@ -272,6 +274,11 @@ export function PersonScreen({ id }: { id: string }) {
   return (
     <Screen title={person.displayName}>
       <PlaceholderArt bleed={false} scene={sceneFromText(person.tags.join(" "))} />
+      <img
+        src={portraitUrl(person.portrait)}
+        alt=""
+        className="size-16 rounded-full object-cover"
+      />
       <p className="text-sm text-muted-foreground">
         {[person.degree, person.major, person.year].filter(Boolean).join(", ")}
       </p>
@@ -580,10 +587,17 @@ export function MessagesScreen() {
             <li key={chat.person.id}>
               <Link
                 href={`/messages/${chat.person.id}`}
-                className="flex min-h-11 flex-col justify-center rounded-[20px] bg-card px-4 py-3 shadow-[var(--shadow-card)]"
+                className="flex min-h-11 items-center gap-3 rounded-[20px] bg-card px-4 py-3 shadow-[var(--shadow-card)]"
               >
+                <img
+                  src={portraitUrl(chat.person.portrait)}
+                  alt=""
+                  className="size-11 rounded-full object-cover"
+                />
+                <span className="flex flex-col">
                 <span className="font-medium">{chat.person.displayName}</span>
                 <span className="text-sm text-muted-foreground">{chat.preview}</span>
+                </span>
               </Link>
             </li>
           ))}
@@ -621,6 +635,11 @@ export function ChatScreen({ id }: { id: string }) {
 
   return (
     <Screen title={person.displayName}>
+      <img
+        src={portraitUrl(person.portrait)}
+        alt=""
+        className="size-16 rounded-full object-cover"
+      />
       <ConversationPanel
         messages={messages}
         suggestions={[{ label: "Suggest a campus time", body: meetupSuggestion }]}
@@ -661,6 +680,13 @@ export function ProfileScreen() {
 
   return (
     <Screen title="Your profile">
+      {state.displayName === viewer.displayName ? (
+        <img
+          src={portraitUrl(viewer.portrait)}
+          alt=""
+          className="size-16 rounded-full object-cover"
+        />
+      ) : null}
       <p className="text-2xl font-medium">{state.displayName}</p>
       <p className="text-sm text-muted-foreground">
         {viewer.degree}, {viewer.major}
