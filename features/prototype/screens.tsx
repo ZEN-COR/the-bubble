@@ -17,6 +17,7 @@ import { ConversationPanel } from "@/features/messages/conversation-panel";
 import { OnboardingPreview } from "@/features/onboarding/onboarding-preview";
 import { PersonCard } from "@/features/people/person-card";
 import {
+  campusDayOptions,
   eventById,
   eventFilters,
   groupById,
@@ -50,16 +51,18 @@ function Screen({
 }
 
 function FilterRow({
+  label = "Filters",
   options,
   value,
   onChange,
 }: {
+  label?: string;
   options: readonly string[];
   value: string;
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label="Filters">
+    <div className="flex gap-2 overflow-x-auto pb-1" role="group" aria-label={label}>
       {options.map((option) => {
         const selected = value === option;
         return (
@@ -98,7 +101,7 @@ export function SignInScreen() {
       return;
     }
     signIn(value);
-    router.push("/people");
+    router.push("/setup/courses");
   }
 
   return (
@@ -179,12 +182,14 @@ export function OnboardingScreen() {
 }
 
 const discoveryFilters = ["For you", "Same courses", "On campus", "Shared interests"] as const;
+const dayFilters = ["Any day", ...campusDayOptions.map((day) => day.short)] as const;
 const crowdTones = ["bg-[#f4ad91]/55", "bg-[#e8dafa]", "bg-[#f4d77d]/80"] as const;
 
 export function PeopleScreen() {
   const router = useRouter();
-  const { people, pendingCount, relation, sendRequest } = usePrototype();
+  const { people, pendingCount, relation, sendRequest, state } = usePrototype();
   const [filter, setFilter] = useState<(typeof discoveryFilters)[number]>("For you");
+  const [day, setDay] = useState<(typeof dayFilters)[number]>("Any day");
   const [query, setQuery] = useState("");
   const [requestId, setRequestId] = useState<string | null>(null);
   const requestPerson = requestId ? personById(requestId) : undefined;
@@ -205,12 +210,14 @@ export function PeopleScreen() {
     const matchesFilter =
       filter === "For you" ||
       (filter === "Same courses" &&
-        person.filters.some((item) => viewer.courses.some((course) => course === item))) ||
+        person.filters.some((item) => state.courses.some((course) => course === item))) ||
       (filter === "On campus" &&
-        person.tags.some((tag) => viewer.campusDays.some((day) => day === tag))) ||
+        person.tags.some((tag) => state.campusDays.some((campusDay) => campusDay === tag))) ||
       (filter === "Shared interests" &&
-        person.tags.some((tag) => viewer.interests.some((interest) => interest === tag)));
-    return matchesQuery && matchesFilter;
+        person.tags.some((tag) => state.interests.some((interest) => interest === tag)));
+    const selectedDay = campusDayOptions.find((option) => option.short === day)?.id;
+    const matchesDay = !selectedDay || person.tags.some((tag) => tag === selectedDay);
+    return matchesQuery && matchesFilter && matchesDay;
   });
 
   return (
@@ -241,6 +248,12 @@ export function PeopleScreen() {
         value={filter}
         onChange={(value) => setFilter(value as typeof filter)}
       />
+      <FilterRow
+        label="Campus day"
+        options={dayFilters}
+        value={day}
+        onChange={(value) => setDay(value as typeof day)}
+      />
       <h2 className="text-base font-semibold">People you might click with</h2>
       {visible.length === 0 ? (
         <div className="flex flex-col gap-3">
@@ -254,6 +267,7 @@ export function PeopleScreen() {
             onClick={() => {
               setQuery("");
               setFilter("For you");
+              setDay("Any day");
             }}
           >
             Clear filters
@@ -274,7 +288,7 @@ export function PeopleScreen() {
                 sharedTags={[...person.tags]}
                 explanation={person.explanation}
                 icebreaker={status === "none" ? person.starter : undefined}
-                portraitSrc={portraitUrl(person.portrait)}
+                portraitSrc={person.portrait ? portraitUrl(person.portrait) : undefined}
                 profileHref={`/people/${person.id}`}
                 actionLabel={
                   status === "connected"
@@ -360,16 +374,18 @@ export function PersonScreen({ id }: { id: string }) {
   return (
     <Screen title={person.displayName}>
       <PlaceholderArt bleed={false} scene={sceneFromText(person.tags.join(" "))} />
-      <img
-        src={portraitUrl(person.portrait)}
-        alt=""
-        className="size-16 rounded-full object-cover"
-      />
+      {person.portrait ? (
+        <img
+          src={portraitUrl(person.portrait)}
+          alt=""
+          className="size-16 rounded-full object-cover"
+        />
+      ) : null}
       <p className="text-sm text-muted-foreground">
         {[person.degree, person.major, person.year].filter(Boolean).join(", ")}
       </p>
       <p>{person.bio}</p>
-      <p className="font-medium">{person.explanation}</p>
+      {person.explanation ? <p className="font-medium">{person.explanation}</p> : null}
       <ul aria-label="Shared tags" className="flex flex-wrap gap-2 text-sm">
         {person.tags.map((tag) => (
           <li key={tag} className="rounded-full bg-secondary px-3 py-1">
@@ -581,7 +597,36 @@ export function GroupsScreen() {
   const { state, toggleGroup } = usePrototype();
 
   return (
-    <Screen title="Groups">
+    <Screen
+      title="Groups"
+      action={
+        <Button asChild>
+          <Link href="/groups/start">Start a group</Link>
+        </Button>
+      }
+    >
+      {state.startedGroups.length > 0 ? (
+        <section className="flex flex-col gap-3" aria-labelledby="started-groups">
+          <h2 id="started-groups" className="text-base font-semibold">
+            Groups you started
+          </h2>
+          {state.startedGroups.map((group) => (
+            <article key={group.id} className="rounded-[20px] bg-card p-4 shadow-[var(--shadow-card)]">
+              <h3 className="font-semibold">{group.name}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{group.pattern}</p>
+              <p className="mt-2 text-sm">
+                {group.openToNew ? "Open to new members." : "Not open to new members."}{" "}
+                {group.partTimeOrReturning ? "Welcomes part-time or returning students." : ""}
+              </p>
+              <p className="mt-2 text-sm">
+                {group.invites.length === 0
+                  ? "No invites sent."
+                  : `${group.invites.length} ${group.invites.length === 1 ? "invite" : "invites"} sent this visit.`}
+              </p>
+            </article>
+          ))}
+        </section>
+      ) : null}
       <div className="flex flex-col gap-3">
         {prototypeGroups.map((group) => {
           const joined = state.groups.includes(group.id);
@@ -675,11 +720,13 @@ export function MessagesScreen() {
                 href={`/messages/${chat.person.id}`}
                 className="flex min-h-11 items-center gap-3 rounded-[20px] bg-card px-4 py-3 shadow-[var(--shadow-card)]"
               >
-                <img
-                  src={portraitUrl(chat.person.portrait)}
-                  alt=""
-                  className="size-11 rounded-full object-cover"
-                />
+                {chat.person.portrait ? (
+                  <img
+                    src={portraitUrl(chat.person.portrait)}
+                    alt=""
+                    className="size-11 rounded-full object-cover"
+                  />
+                ) : null}
                 <span className="flex flex-col">
                 <span className="font-medium">{chat.person.displayName}</span>
                 <span className="text-sm text-muted-foreground">{chat.preview}</span>
@@ -721,11 +768,13 @@ export function ChatScreen({ id }: { id: string }) {
 
   return (
     <Screen title={person.displayName}>
-      <img
-        src={portraitUrl(person.portrait)}
-        alt=""
-        className="size-16 rounded-full object-cover"
-      />
+      {person.portrait ? (
+        <img
+          src={portraitUrl(person.portrait)}
+          alt=""
+          className="size-16 rounded-full object-cover"
+        />
+      ) : null}
       <ConversationPanel
         messages={messages}
         suggestions={[{ label: "Suggest a campus time", body: meetupSuggestion }]}
@@ -777,9 +826,10 @@ export function ProfileScreen() {
       <p className="text-sm text-muted-foreground">
         {viewer.degree}, {viewer.major}
       </p>
-      <p>Courses: {viewer.courses.join(", ")}</p>
-      <p>Interests: {viewer.interests.join(", ")}</p>
-      <p>Campus days shared: {state.shareCampusDays ? viewer.campusDays.join(", ") : "Hidden"}</p>
+      <p>Courses: {state.courses.join(", ") || "None yet"}</p>
+      <p>Interests: {state.interests.join(", ") || "None yet"}</p>
+      <p>Campus days: {state.shareCampusDays ? state.campusDays.join(", ") || "None yet" : "Hidden"}</p>
+      <p>Meet-up spots: {state.meetupSpots.join(", ") || "None yet"}</p>
       <p>Discovery: {state.discoverable ? "On" : "Off"}</p>
       <div className="flex flex-wrap gap-2">
         <Button asChild variant="outline">

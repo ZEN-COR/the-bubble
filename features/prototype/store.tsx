@@ -2,13 +2,39 @@
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 
-import { prototypePeople } from "@/features/prototype/data";
+import { prototypePeople, viewer } from "@/features/prototype/data";
 
 export type ChatMessage = {
   id: string;
   from: "you" | "them";
   body: string;
   time: string;
+};
+
+export type StartedGroup = {
+  id: string;
+  name: string;
+  topic: string;
+  pattern: string;
+  openToNew: boolean;
+  partTimeOrReturning: boolean;
+  invites: string[];
+};
+
+export type GroupDraft = {
+  topic: string;
+  pattern: string[];
+  openToNew: boolean;
+  partTimeOrReturning: boolean;
+  invites: string[];
+};
+
+const emptyGroupDraft: GroupDraft = {
+  topic: "",
+  pattern: [],
+  openToNew: false,
+  partTimeOrReturning: false,
+  invites: [],
 };
 
 export type PrototypeReport = {
@@ -20,6 +46,10 @@ export type PrototypeReport = {
 
 type PrototypeState = {
   signedInEmail: string | null;
+  courses: string[];
+  interests: string[];
+  campusDays: string[];
+  meetupSpots: string[];
   displayName: string;
   discoverable: boolean;
   shareCampusDays: boolean;
@@ -30,6 +60,8 @@ type PrototypeState = {
   connected: string[];
   rsvps: Record<string, "going" | "not_going">;
   groups: string[];
+  groupDraft: GroupDraft;
+  startedGroups: StartedGroup[];
   threads: Record<string, ChatMessage[]>;
   reports: PrototypeReport[];
   blocked: string[];
@@ -41,6 +73,10 @@ const algorithmsId = "dddddddd-dddd-4ddd-8ddd-ddddddddddd1";
 
 const initialState: PrototypeState = {
   signedInEmail: null,
+  courses: [...viewer.courses],
+  interests: [...viewer.interests],
+  campusDays: [...viewer.campusDays],
+  meetupSpots: ["Library foyer"],
   displayName: "Alex Reed",
   discoverable: true,
   shareCampusDays: true,
@@ -56,6 +92,8 @@ const initialState: PrototypeState = {
   connected: [jordanId],
   rsvps: { [algorithmsId]: "going" },
   groups: [],
+  groupDraft: emptyGroupDraft,
+  startedGroups: [],
   threads: {
     [jordanId]: [
       {
@@ -76,6 +114,9 @@ type PrototypeContextValue = {
   pendingCount: number;
   reset: () => void;
   signIn: (email: string) => void;
+  setCourses: (courses: string[]) => void;
+  setInterests: (interests: string[]) => void;
+  setCampusPlan: (campusDays: string[], meetupSpots: string[]) => void;
   setDisplayName: (name: string) => void;
   setDiscoverable: (value: boolean) => void;
   setShareCampusDays: (value: boolean) => void;
@@ -87,6 +128,11 @@ type PrototypeContextValue = {
   decline: (personId: string) => void;
   rsvp: (eventId: string, status: "going" | "not_going") => void;
   toggleGroup: (groupId: string) => void;
+  setGroupTopic: (topic: string) => void;
+  setGroupPattern: (pattern: string[]) => void;
+  setGroupAccess: (openToNew: boolean, partTimeOrReturning: boolean) => void;
+  inviteToGroup: (personId: string) => void;
+  finishGroup: () => void;
   sendMessage: (personId: string, body: string) => void;
   report: (subject: string, reason: string) => void;
   setReportStatus: (id: string, status: PrototypeReport["status"]) => void;
@@ -111,6 +157,10 @@ export function PrototypeProvider({ children }: { children: ReactNode }) {
       reset: () => setState(initialState),
       signIn: (email) =>
         setState((current) => ({ ...current, signedInEmail: email.trim().toLowerCase() })),
+      setCourses: (courses) => setState((current) => ({ ...current, courses })),
+      setInterests: (interests) => setState((current) => ({ ...current, interests })),
+      setCampusPlan: (campusDays, meetupSpots) =>
+        setState((current) => ({ ...current, campusDays, meetupSpots })),
       setDisplayName: (name) => setState((current) => ({ ...current, displayName: name })),
       setDiscoverable: (discoverable) => setState((current) => ({ ...current, discoverable })),
       setShareCampusDays: (shareCampusDays) =>
@@ -205,6 +255,47 @@ export function PrototypeProvider({ children }: { children: ReactNode }) {
             ? current.groups.filter((id) => id !== groupId)
             : [...current.groups, groupId],
         })),
+      setGroupTopic: (topic) =>
+        setState((current) => ({
+          ...current,
+          groupDraft: { ...emptyGroupDraft, topic },
+        })),
+      setGroupPattern: (pattern) =>
+        setState((current) => ({
+          ...current,
+          groupDraft: { ...current.groupDraft, pattern },
+        })),
+      setGroupAccess: (openToNew, partTimeOrReturning) =>
+        setState((current) => ({
+          ...current,
+          groupDraft: { ...current.groupDraft, openToNew, partTimeOrReturning },
+        })),
+      inviteToGroup: (personId) =>
+        setState((current) => ({
+          ...current,
+          groupDraft: current.groupDraft.invites.includes(personId)
+            ? current.groupDraft
+            : { ...current.groupDraft, invites: [...current.groupDraft.invites, personId] },
+        })),
+      finishGroup: () =>
+        setState((current) => {
+          const { topic, pattern, openToNew, partTimeOrReturning, invites } = current.groupDraft;
+          if (!topic || pattern.length === 0) return current;
+          const started: StartedGroup = {
+            id: `started-${topic}-${current.startedGroups.length + 1}`,
+            name: `${topic} group`,
+            topic,
+            pattern: pattern.join(", "),
+            openToNew,
+            partTimeOrReturning,
+            invites,
+          };
+          return {
+            ...current,
+            groupDraft: emptyGroupDraft,
+            startedGroups: [started, ...current.startedGroups],
+          };
+        }),
       sendMessage: (personId, body) =>
         setState((current) => ({
           ...current,
