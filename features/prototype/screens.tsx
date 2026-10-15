@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { FormEvent, ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -82,25 +82,60 @@ function FilterRow({
   );
 }
 
+const vuwStudentEmail = /^[^\s@]+@myvuw\.ac\.nz$/i;
+
 export function SignInScreen() {
   const router = useRouter();
+  const { signIn } = usePrototype();
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState("");
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const value = email.trim();
+    if (!vuwStudentEmail.test(value)) {
+      setError("Enter a student address ending in @myvuw.ac.nz.");
+      return;
+    }
+    signIn(value);
+    router.push("/people");
+  }
 
   return (
     <main id="main" className="flex w-full flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Sign in with VUW email</h1>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
-          The prototype skips email delivery. Use either path to click through the app.
+          Use your student address to open the prototype. This check stays in the browser and
+          does not send a link or store the email.
         </p>
       </div>
-      <div className="flex flex-col gap-3">
-        <Button type="button" onClick={() => router.push("/verify")}>
-          Email me a sign-in link
-        </Button>
-        <Button type="button" variant="secondary" onClick={() => router.push("/people")}>
-          Enter the prototype
-        </Button>
-      </div>
+      <form className="flex flex-col gap-4" onSubmit={submit}>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="vuw-email">Student email</Label>
+          <Input
+            id="vuw-email"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            required
+            value={email}
+            placeholder="name@myvuw.ac.nz"
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "vuw-email-error" : undefined}
+            onChange={(event) => {
+              setEmail(event.target.value);
+              setError("");
+            }}
+          />
+          {error ? (
+            <p id="vuw-email-error" role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          ) : null}
+        </div>
+        <Button type="submit">Continue</Button>
+      </form>
     </main>
   );
 }

@@ -19,6 +19,7 @@ export type PrototypeReport = {
 };
 
 type PrototypeState = {
+  signedInEmail: string | null;
   displayName: string;
   discoverable: boolean;
   shareCampusDays: boolean;
@@ -39,6 +40,7 @@ const caseyId = "66666666-6666-4666-8666-666666666666";
 const algorithmsId = "dddddddd-dddd-4ddd-8ddd-ddddddddddd1";
 
 const initialState: PrototypeState = {
+  signedInEmail: null,
   displayName: "Alex Reed",
   discoverable: true,
   shareCampusDays: true,
@@ -73,6 +75,7 @@ type PrototypeContextValue = {
   people: ReadonlyArray<(typeof prototypePeople)[number]>;
   pendingCount: number;
   reset: () => void;
+  signIn: (email: string) => void;
   setDisplayName: (name: string) => void;
   setDiscoverable: (value: boolean) => void;
   setShareCampusDays: (value: boolean) => void;
@@ -106,6 +109,8 @@ export function PrototypeProvider({ children }: { children: ReactNode }) {
       people: prototypePeople.filter((person) => !state.blocked.includes(person.id)),
       pendingCount,
       reset: () => setState(initialState),
+      signIn: (email) =>
+        setState((current) => ({ ...current, signedInEmail: email.trim().toLowerCase() })),
       setDisplayName: (name) => setState((current) => ({ ...current, displayName: name })),
       setDiscoverable: (discoverable) => setState((current) => ({ ...current, discoverable })),
       setShareCampusDays: (shareCampusDays) =>

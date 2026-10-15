@@ -46,7 +46,7 @@ export default function HomePage() {
       </section>
       <main id="main" className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-6 px-4 pb-10">
         <Button asChild className="w-full">
-          <Link href="/people">Open the prototype</Link>
+          <Link href="/sign-in">Open the prototype</Link>
         </Button>
         <section aria-label="How it works" className="grid gap-3">
           {steps.map((step) => (
