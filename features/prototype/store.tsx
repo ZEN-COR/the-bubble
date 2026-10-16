@@ -11,6 +11,15 @@ export type ChatMessage = {
   time: string;
 };
 
+export type Meetup = {
+  id: string;
+  personId: string;
+  day: string;
+  time: string;
+  place: string;
+  status: "proposed" | "confirmed" | "declined";
+};
+
 export type StartedGroup = {
   id: string;
   name: string;
@@ -63,6 +72,7 @@ type PrototypeState = {
   groupDraft: GroupDraft;
   startedGroups: StartedGroup[];
   threads: Record<string, ChatMessage[]>;
+  meetups: Meetup[];
   reports: PrototypeReport[];
   blocked: string[];
 };
@@ -104,6 +114,7 @@ const initialState: PrototypeState = {
       },
     ],
   },
+  meetups: [],
   reports: [],
   blocked: [],
 };
@@ -134,6 +145,8 @@ type PrototypeContextValue = {
   inviteToGroup: (personId: string) => void;
   finishGroup: () => void;
   sendMessage: (personId: string, body: string) => void;
+  proposeMeetup: (personId: string, day: string, time: string, place: string) => void;
+  respondMeetup: (id: string, status: "confirmed" | "declined") => void;
   report: (subject: string, reason: string) => void;
   setReportStatus: (id: string, status: PrototypeReport["status"]) => void;
   block: (personId: string) => void;
@@ -307,6 +320,13 @@ export function PrototypeProvider({ children }: { children: ReactNode }) {
             ],
           },
         })),
+      proposeMeetup: (personId, day, time, place) =>
+        setState((current) => {
+          if (!current.connected.includes(personId) || !day || !time || !place) return current;
+          return { ...current, meetups: [{ id: `meet-${Date.now()}`, personId, day, time, place, status: "proposed" }, ...current.meetups] };
+        }),
+      respondMeetup: (id, status) =>
+        setState((current) => ({ ...current, meetups: current.meetups.map((meetup) => meetup.id === id ? { ...meetup, status } : meetup) })),
       report: (subject, reason) =>
         setState((current) => ({
           ...current,

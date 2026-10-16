@@ -51,6 +51,7 @@ export function EventCard({
         )}
       </CardContent>
       <CardFooter className="gap-2">
+        {href ? <Button asChild variant="outline"><Link href={href}>View details</Link></Button> : null}
         <Button
           type="button"
           disabled={!onGoing}

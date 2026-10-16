@@ -1,6 +1,7 @@
 import {
   Calendar,
   CalendarDays,
+  UserRoundCheck,
   MessagesSquare,
   UserRound,
   Users,
@@ -9,6 +10,7 @@ import {
 
 export const mainNavigation = [
   { href: "/people", label: "People", icon: Users },
+  { href: "/connections", label: "Connections", icon: UserRoundCheck },
   { href: "/events", label: "Events", icon: CalendarDays },
   { href: "/groups", label: "Groups", icon: UsersRound },
   { href: "/messages", label: "Messages", icon: MessagesSquare },

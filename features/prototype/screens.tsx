@@ -443,8 +443,9 @@ export function ConnectionsScreen() {
 
   return (
     <Screen title="Connections">
+      <p className="text-sm text-muted-foreground">Manage requests here. Once connected, open a chat and propose a campus meetup.</p>
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">For you</h2>
+        <h2 className="text-lg font-medium">Received requests ({incoming.length})</h2>
         {incoming.length === 0 ? (
           <p className="text-sm text-muted-foreground">No pending requests.</p>
         ) : (
@@ -469,7 +470,7 @@ export function ConnectionsScreen() {
         )}
       </section>
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Sent</h2>
+        <h2 className="text-lg font-medium">Waiting for a response ({sent.length})</h2>
         {sent.length === 0 ? (
           <p className="text-sm text-muted-foreground">You have not sent a request.</p>
         ) : (
@@ -490,11 +491,13 @@ export function ConnectionsScreen() {
         )}
       </section>
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Connected</h2>
+        <h2 className="text-lg font-medium">Your connections ({connected.length})</h2>
+        {connected.length === 0 ? <p className="text-sm text-muted-foreground">Accept a request to see your connections here.</p> : null}
         {connected.map((person) => (
-          <Link key={person.id} href={`/messages/${person.id}`} className="min-h-11 font-medium underline">
-            Message {person.displayName}
-          </Link>
+          <div key={person.id} className="flex items-center justify-between gap-2 rounded-2xl bg-card p-3 shadow-[var(--shadow-card)]">
+            <Link href={`/people/${person.id}`} className="font-medium underline">{person.displayName}</Link>
+            <Button asChild size="sm"><Link href={`/messages/${person.id}`}>Chat & meet</Link></Button>
+          </div>
         ))}
       </section>
     </Screen>
@@ -562,6 +565,7 @@ export function EventScreen({ id }: { id: string }) {
       <p>{event.summary}</p>
       <p className="font-medium">{event.relevance}</p>
       <p className="text-sm">Student-created by {event.organizer}. Not a verified organizer.</p>
+      <p role="status" className="rounded-lg bg-secondary p-3 text-sm">RSVP status: {going ? "Going — this event appears in your calendar" : state.rsvps[id] === "not_going" ? "Not going" : "No response yet"}</p>
       <div className="flex gap-2">
         <Button type="button" variant={going ? "secondary" : "default"} onClick={() => rsvp(id, "going")}>
           {going ? "You are going" : "RSVP going"}
@@ -571,7 +575,7 @@ export function EventScreen({ id }: { id: string }) {
         </Button>
       </div>
       <section>
-        <h2 className="text-lg font-medium">Visible attendees</h2>
+        <h2 className="text-lg font-medium">Meet people attending</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Only people who chose to be shown are listed. Hidden RSVPs stay hidden.
         </p>
@@ -581,9 +585,7 @@ export function EventScreen({ id }: { id: string }) {
             if (!attendee) return null;
             return (
               <li key={attendeeId}>
-                <Link href={`/people/${attendee.id}`} className="font-medium underline">
-                  {attendee.displayName}
-                </Link>
+                <Link href={`/people/${attendee.id}`} className="flex flex-col gap-1 rounded-xl bg-card p-3 shadow-[var(--shadow-card)]"><span className="font-semibold">{attendee.displayName} → View profile</span><span className="text-sm text-muted-foreground">{attendee.bio}</span><span className="text-xs text-muted-foreground">{attendee.tags.join(" · ")}</span></Link>
               </li>
             );
           })}
@@ -666,11 +668,13 @@ export function GroupScreen({ id }: { id: string }) {
 
   return (
     <Screen title={group.name}>
+      <p className="text-sm text-muted-foreground">These are example student groups, not verified live club memberships.</p>
       <PlaceholderArt bleed={false} scene={sceneFromText(`${group.name} ${group.description}`)} />
       <p className="text-sm text-muted-foreground">
         {group.privacy === "invite" ? "Private, invitation preview" : "Public group"}
       </p>
       <p>{group.description}</p>
+      <section className="rounded-xl bg-secondary p-3"><h2 className="font-semibold">When does this group meet?</h2><p className="text-sm">See the related event below for a scheduled time. No regular meeting schedule has been provided in this prototype.</p><h2 className="mt-3 font-semibold">Have a question?</h2><p className="text-sm">Open a member profile from People to request a connection. Group-wide messaging is not available yet.</p><Link href="/people" className="mt-2 inline-block font-medium underline">Find students to ask →</Link></section>
       <Button type="button" onClick={() => toggleGroup(id)}>
         {joined ? "Leave" : group.privacy === "invite" ? "Accept invite" : "Join"}
       </Button>
@@ -683,11 +687,7 @@ export function GroupScreen({ id }: { id: string }) {
           {joined ? <li>{state.displayName}</li> : null}
         </ul>
       </section>
-      {event ? (
-        <Link href={`/events/${event.id}`} className="min-h-11 font-medium underline">
-          {event.title}
-        </Link>
-      ) : null}
+      <section><h2 className="text-lg font-semibold">Related events</h2>{event ? <Link href={`/events/${event.id}`} className="inline-flex min-h-11 items-center font-medium underline">{event.title} → View event</Link> : <p className="text-sm text-muted-foreground">No upcoming events listed.</p>}</section>
     </Screen>
   );
 }
@@ -708,6 +708,7 @@ export function MessagesScreen() {
 
   return (
     <Screen title="Messages">
+      <Button asChild variant="outline"><Link href="/connections">View requests & connections</Link></Button>
       {chats.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           Messages appear after you accept a connection.
@@ -742,7 +743,10 @@ export function MessagesScreen() {
 
 export function ChatScreen({ id }: { id: string }) {
   const person = personById(id);
-  const { state, sendMessage } = usePrototype();
+  const { state, sendMessage, proposeMeetup, respondMeetup } = usePrototype();
+  const [meetDay, setMeetDay] = useState("Tuesday");
+  const [meetTime, setMeetTime] = useState("14:00");
+  const [meetPlace, setMeetPlace] = useState("Library foyer");
   const connected = state.connected.includes(id) && !state.blocked.includes(id);
 
   if (!person || !connected) {
@@ -761,6 +765,7 @@ export function ChatScreen({ id }: { id: string }) {
   const messages = (state.threads[id] ?? []).map((message) => ({
     id: message.id,
     senderName: message.from === "you" ? state.displayName : person.displayName,
+    isMine: message.from === "you",
     body: message.body,
     sentAt: "2026-11-03T04:12:00.000Z",
     sentAtLabel: message.time,
@@ -768,6 +773,7 @@ export function ChatScreen({ id }: { id: string }) {
 
   return (
     <Screen title={person.displayName}>
+      <Link href={`/people/${person.id}`} className="text-sm font-medium underline">View {person.displayName}&apos;s profile</Link>
       {person.portrait ? (
         <img
           src={portraitUrl(person.portrait)}
@@ -780,6 +786,19 @@ export function ChatScreen({ id }: { id: string }) {
         suggestions={[{ label: "Suggest a campus time", body: meetupSuggestion }]}
         onSend={(body) => sendMessage(id, body)}
       />
+      <section className="rounded-2xl border border-border bg-card p-4" aria-label="Plan a campus meetup">
+        <h2 className="text-lg font-semibold">Plan a meetup</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Prototype scheduling: proposals and confirmations are simulated in this browser. Meet in a public campus space.</p>
+        <div className="mt-3 grid gap-3">
+          <label className="text-sm font-medium">Day <select className="mt-1 w-full rounded-lg border bg-background p-3" value={meetDay} onChange={(e) => setMeetDay(e.target.value)}>{["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map((day) => <option key={day}>{day}</option>)}</select></label>
+          <label className="text-sm font-medium">Time <input className="mt-1 w-full rounded-lg border bg-background p-3" type="time" value={meetTime} onChange={(e) => setMeetTime(e.target.value)} required /></label>
+          <label className="text-sm font-medium">Public location <select className="mt-1 w-full rounded-lg border bg-background p-3" value={meetPlace} onChange={(e) => setMeetPlace(e.target.value)}>{["Library foyer", "Student hub", "Campus cafe"].map((place) => <option key={place}>{place}</option>)}</select></label>
+          <Button type="button" disabled={!meetTime} onClick={() => proposeMeetup(id, meetDay, meetTime, meetPlace)}>Propose meetup</Button>
+        </div>
+        <h3 className="mt-5 font-semibold">Meetup plans</h3>
+        {state.meetups.filter((m) => m.personId === id).length === 0 ? <p className="mt-1 text-sm text-muted-foreground">No meetup proposed yet.</p> : null}
+        {state.meetups.filter((m) => m.personId === id).map((m) => <div key={m.id} className="mt-3 rounded-xl bg-secondary p-3"><p className="font-medium">{m.day}, {m.time} · {m.place}</p><p className="text-sm">{m.status === "proposed" ? "Awaiting response (prototype)" : m.status === "confirmed" ? "Meetup confirmed! See Calendar." : "Meetup declined"}</p>{m.status === "proposed" ? <div className="mt-2 flex gap-2"><Button size="sm" onClick={() => respondMeetup(m.id, "confirmed")}>Simulate acceptance</Button><Button size="sm" variant="outline" onClick={() => respondMeetup(m.id, "declined")}>Decline</Button></div> : null}</div>)}
+      </section>
     </Screen>
   );
 }
@@ -790,6 +809,8 @@ export function CalendarScreen() {
 
   return (
     <Screen title="Calendar">
+      <section className="flex flex-col gap-2"><h2 className="text-lg font-semibold">Campus meetups</h2>{state.meetups.filter((m) => m.status === "confirmed").length === 0 ? <p className="text-sm text-muted-foreground">Confirmed meetups will appear here.</p> : null}{state.meetups.filter((m) => m.status === "confirmed").map((m) => <Link key={m.id} href={`/messages/${m.personId}`} className="rounded-xl bg-card p-3 shadow-[var(--shadow-card)]"><span className="font-semibold">{personById(m.personId)?.displayName}</span><p className="text-sm">{m.day}, {m.time} · {m.place}</p></Link>)}</section>
+      <h2 className="text-lg font-semibold">Events you are attending</h2>
       <p className="text-sm text-muted-foreground">Times are shown in Pacific/Auckland.</p>
       {going.length === 0 ? (
         <p className="text-sm text-muted-foreground">RSVP to an event and it will show up here.</p>

@@ -95,7 +95,7 @@ export function CoursesSetupScreen() {
     <SetupFrame
       step={2}
       title="Select current courses"
-      body="Choose from this prototype list. A VUW email does not prove you are enrolled in these courses."
+      body="Select the courses you are currently taking. We use them to help you discover classmates—not to choose which courses you want friends from. This prototype does not verify enrolment."
     >
       <ChoiceList
         label="Current courses"
@@ -142,7 +142,7 @@ export function InterestsSetupScreen() {
     <SetupFrame
       step={3}
       title="Pick interests and hobbies"
-      body="These stay on your profile for this visit. They are not a compatibility score."
+      body="Choose interests that describe you. Other students can see shared interests to start conversations. These are not a calculated compatibility score."
     >
       <ChoiceList
         label="Interests and hobbies"
@@ -198,10 +198,10 @@ export function CampusSetupScreen() {
     <SetupFrame
       step={4}
       title="Set campus days and meet-up spots"
-      body="Days can overlap with someone else only when you choose to share them. Spots are public campus places already used in this prototype."
+      body="Choose the days you normally attend campus, then select public places where you would feel comfortable meeting someone. These are preferences, not scheduled meetups; campus-day visibility is controlled in Privacy."
     >
       <div className="flex flex-col gap-3">
-        <h2 className="text-base font-semibold">Campus days</h2>
+        <h2 className="text-base font-semibold">Days I am usually on campus</h2>
         <ChoiceList
           label="Campus days"
           options={campusDayOptions.map((day) => day.id)}
@@ -214,7 +214,7 @@ export function CampusSetupScreen() {
         {summary ? <p className="text-sm text-muted-foreground">{summary}</p> : null}
       </div>
       <div className="flex flex-col gap-3">
-        <h2 className="text-base font-semibold">Preferred meet-up spots</h2>
+        <h2 className="text-base font-semibold">Public places I prefer for meetups</h2>
         <ChoiceList
           label="Meet-up spots"
           options={meetupSpotOptions}

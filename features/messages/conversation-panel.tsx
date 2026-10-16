@@ -16,6 +16,7 @@ export function ConversationPanel({
     body: string;
     sentAtLabel: string;
     sentAt: string;
+    isMine?: boolean;
   }[];
   onSend?: (body: string) => void;
   suggestions?: { label: string; body: string }[];
@@ -33,11 +34,11 @@ export function ConversationPanel({
     <section aria-label="Conversation" className="flex flex-col gap-4">
       <ol aria-label="Messages" className="flex flex-col gap-3">
         {messages.map((message) => (
-          <li key={message.id}>
-            <article className="rounded-2xl bg-secondary px-3 py-3">
+          <li key={message.id} className={`flex ${message.isMine ? "justify-end" : "justify-start"}`}>
+            <article className={`max-w-[85%] rounded-2xl px-3 py-3 ${message.isMine ? "bg-primary text-primary-foreground" : "border border-border bg-card text-foreground"}`}>
               <p className="text-sm font-medium">{message.senderName}</p>
               <p>{message.body}</p>
-              <time dateTime={message.sentAt} className="text-xs text-muted-foreground">
+              <time dateTime={message.sentAt} className={`text-xs ${message.isMine ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
                 {message.sentAtLabel}
               </time>
             </article>
