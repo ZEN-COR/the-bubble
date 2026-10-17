@@ -51,7 +51,7 @@ export function EventCard({
         )}
       </CardContent>
       <CardFooter className="gap-2">
-        {href ? <Button asChild variant="outline"><Link href={href}>View details</Link></Button> : null}
+        {href ? <Button asChild variant="outline"><Link href={href}>View event &amp; attendees</Link></Button> : null}
         <Button
           type="button"
           disabled={!onGoing}
@@ -60,7 +60,7 @@ export function EventCard({
           aria-pressed={onGoing ? going : undefined}
           aria-describedby={onGoing ? undefined : `${id}-rsvp-unavailable`}
         >
-          {going ? "Going" : "RSVP going"}
+          {going ? "Going ✓ — Leave" : "RSVP: Going"}
         </Button>
         {onGoing ? null : (
           <p id={`${id}-rsvp-unavailable`} className="sr-only">

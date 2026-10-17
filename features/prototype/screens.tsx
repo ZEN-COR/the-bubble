@@ -24,6 +24,7 @@ import {
   meetupSuggestion,
   personById,
   prototypeEvents,
+  prototypePeople,
   prototypeGroups,
   viewer,
 } from "@/features/prototype/data";
@@ -234,6 +235,11 @@ export function PeopleScreen() {
       <p className="-mt-4 text-sm text-muted-foreground">
         Good connections start somewhere. <span aria-hidden="true">✨</span>
       </p>
+      <nav aria-label="Discover students or groups" className="grid grid-cols-2 gap-2 rounded-xl bg-secondary p-1">
+        <Link aria-current="page" href="/people" className="rounded-lg bg-card px-4 py-3 text-center text-sm font-semibold shadow-sm">People</Link>
+        <Link href="/groups" className="rounded-lg px-4 py-3 text-center text-sm font-semibold hover:bg-card">Groups</Link>
+      </nav>
+      <p className="text-sm text-muted-foreground">Not sure how to start? <Link href="/events" className="font-semibold underline">Join a shared activity</Link> first.</p>
       <Label htmlFor="people-search" className="sr-only">
         Search people, interests, and courses
       </Label>
@@ -565,13 +571,16 @@ export function EventScreen({ id }: { id: string }) {
       <p>{event.summary}</p>
       <p className="font-medium">{event.relevance}</p>
       <p className="text-sm">Student-created by {event.organizer}. Not a verified organizer.</p>
-      <p role="status" className="rounded-lg bg-secondary p-3 text-sm">RSVP status: {going ? "Going — this event appears in your calendar" : state.rsvps[id] === "not_going" ? "Not going" : "No response yet"}</p>
+      {prototypePeople.filter((person) => person.displayName === event.organizer).map((person) => (
+        <Button key={person.id} asChild variant="outline"><Link href={`/people/${person.id}`}>Contact organiser: {person.displayName}</Link></Button>
+      ))}
+      <p role="status" aria-live="polite" className="rounded-lg bg-secondary p-3 text-sm">RSVP status: {going ? "Going — this event appears in your calendar" : state.rsvps[id] === "not_going" ? "Not going" : "No response yet"}</p>
       <div className="flex gap-2">
         <Button type="button" variant={going ? "secondary" : "default"} onClick={() => rsvp(id, "going")}>
-          {going ? "You are going" : "RSVP going"}
+          {going ? "Going ✓" : "RSVP: Going"}
         </Button>
         <Button type="button" variant="outline" onClick={() => rsvp(id, "not_going")}>
-          Not going
+          {going ? "Leave event" : "RSVP: Not going"}
         </Button>
       </div>
       <section>
@@ -585,7 +594,7 @@ export function EventScreen({ id }: { id: string }) {
             if (!attendee) return null;
             return (
               <li key={attendeeId}>
-                <Link href={`/people/${attendee.id}`} className="flex flex-col gap-1 rounded-xl bg-card p-3 shadow-[var(--shadow-card)]"><span className="font-semibold">{attendee.displayName} → View profile</span><span className="text-sm text-muted-foreground">{attendee.bio}</span><span className="text-xs text-muted-foreground">{attendee.tags.join(" · ")}</span></Link>
+                <Link href={`/people/${attendee.id}`} className="flex flex-col gap-1 rounded-xl bg-card p-3 shadow-[var(--shadow-card)]"><span className="font-semibold">{attendee.displayName} → View profile &amp; connect</span><span className="text-sm text-muted-foreground">{attendee.bio}</span><span className="text-xs text-muted-foreground">{attendee.tags.join(" · ")}</span></Link>
               </li>
             );
           })}
@@ -607,6 +616,11 @@ export function GroupsScreen() {
         </Button>
       }
     >
+      <nav aria-label="Discover students or groups" className="grid grid-cols-2 gap-2 rounded-xl bg-secondary p-1">
+        <Link href="/people" className="rounded-lg px-4 py-3 text-center text-sm font-semibold hover:bg-card">People</Link>
+        <Link aria-current="page" href="/groups" className="rounded-lg bg-card px-4 py-3 text-center text-sm font-semibold shadow-sm">Groups</Link>
+      </nav>
+      <p className="text-sm text-muted-foreground">Meet people naturally through shared courses, interests and activities.</p>
       {state.startedGroups.length > 0 ? (
         <section className="flex flex-col gap-3" aria-labelledby="started-groups">
           <h2 id="started-groups" className="text-base font-semibold">
@@ -674,16 +688,44 @@ export function GroupScreen({ id }: { id: string }) {
         {group.privacy === "invite" ? "Private, invitation preview" : "Public group"}
       </p>
       <p>{group.description}</p>
-      <section className="rounded-xl bg-secondary p-3"><h2 className="font-semibold">When does this group meet?</h2><p className="text-sm">See the related event below for a scheduled time. No regular meeting schedule has been provided in this prototype.</p><h2 className="mt-3 font-semibold">Have a question?</h2><p className="text-sm">Open a member profile from People to request a connection. Group-wide messaging is not available yet.</p><Link href="/people" className="mt-2 inline-block font-medium underline">Find students to ask →</Link></section>
+      <section className="rounded-xl bg-secondary p-4" aria-labelledby="group-meeting-heading">
+        <h2 id="group-meeting-heading" className="font-semibold">Meeting details</h2>
+        {event ? (
+          <>
+            <p className="mt-2 text-sm">Next listed activity: {event.startsAtLabel} · {event.locationLabel}</p>
+            <Button asChild variant="outline" className="mt-3"><Link href={`/events/${event.id}`}>View activity and attendees</Link></Button>
+          </>
+        ) : (
+          <p className="mt-2 text-sm">No upcoming activity has been listed for this group.</p>
+        )}
+        <p className="mt-2 text-xs text-muted-foreground">A recurring meeting schedule has not been supplied for this example group.</p>
+      </section>
+      <section className="rounded-xl bg-secondary p-4" aria-labelledby="group-contact-heading">
+        <h2 id="group-contact-heading" className="font-semibold">Connect with this group</h2>
+        <p className="mt-2 text-sm">Open an opted-in member’s profile to request a connection. Messaging is available after a connection is accepted.</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {group.members.map((name) => {
+            const member = prototypePeople.find((person) => person.displayName === name);
+            return member ? (
+              <Button key={name} asChild variant="outline"><Link href={`/people/${member.id}`}>Connect with {name}</Link></Button>
+            ) : null;
+          })}
+          {event ? prototypePeople.filter((person) => person.displayName === event.organizer).map((person) => (
+            <Button key={`organizer-${person.id}`} asChild variant="outline"><Link href={`/people/${person.id}`}>Contact activity organiser</Link></Button>
+          )) : null}
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">Group-wide chat is not implemented in this prototype.</p>
+      </section>
       <Button type="button" onClick={() => toggleGroup(id)}>
         {joined ? "Leave" : group.privacy === "invite" ? "Accept invite" : "Join"}
       </Button>
       <section>
         <h2 className="text-lg font-medium">Members who opted in</h2>
         <ul className="mt-2 list-disc pl-5">
-          {group.members.map((name) => (
-            <li key={name}>{name}</li>
-          ))}
+          {group.members.map((name) => {
+            const member = prototypePeople.find((person) => person.displayName === name);
+            return <li key={name}>{member ? <Link href={`/people/${member.id}`} className="underline">{name} — View profile</Link> : name}</li>;
+          })}
           {joined ? <li>{state.displayName}</li> : null}
         </ul>
       </section>

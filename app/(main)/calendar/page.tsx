@@ -1,9 +1,4 @@
 import type { Metadata } from "next";
-
-import { CalendarScreen } from "@/features/prototype/screens";
-
+import { CalendarGrid } from "@/features/calendar/calendar-grid";
 export const metadata: Metadata = { title: "Calendar" };
-
-export default function CalendarPage() {
-  return <CalendarScreen />;
-}
+export default function CalendarPage() { return <CalendarGrid />; }

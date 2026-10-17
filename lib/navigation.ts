@@ -1,5 +1,6 @@
 import {
   Calendar,
+  House,
   CalendarDays,
   UserRoundCheck,
   MessagesSquare,
@@ -9,6 +10,7 @@ import {
 } from "lucide-react";
 
 export const mainNavigation = [
+  { href: "/home", label: "Home", icon: House },
   { href: "/people", label: "People", icon: Users },
   { href: "/connections", label: "Connections", icon: UserRoundCheck },
   { href: "/events", label: "Events", icon: CalendarDays },

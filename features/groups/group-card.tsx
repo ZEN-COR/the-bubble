@@ -44,7 +44,7 @@ export function GroupCard({
         <p>{description}</p>
       </CardContent>
       <CardFooter className="gap-2">
-        {href ? <Button asChild variant="outline"><Link href={href}>Group details</Link></Button> : null}
+        {href ? <Button asChild variant="outline"><Link href={href}>View group &amp; meeting details</Link></Button> : null}
         <Button
           type="button"
           disabled={!onJoin}

@@ -17,7 +17,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="md:grid md:grid-cols-[16rem_minmax(0,1fr)]">
         <aside className="sticky top-0 hidden h-dvh flex-col bg-sidebar md:flex">
           <div className="px-4 py-5">
-            <Link href="/people" className="inline-flex min-h-11 items-center rounded-lg">
+            <Link href="/home" className="inline-flex min-h-11 items-center rounded-lg">
               <Wordmark />
             </Link>
           </div>
@@ -40,7 +40,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         <div className="pb-24 md:pb-0">
           <PrototypeBanner />
           <header className="sticky top-0 z-20 flex items-center justify-between bg-background/95 px-4 py-2 md:hidden">
-            <Link href="/people" className="inline-flex min-h-11 items-center">
+            <Link href="/home" className="inline-flex min-h-11 items-center">
               <Wordmark />
             </Link>
             <Link
@@ -62,7 +62,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         aria-label="Primary"
         className="fixed inset-x-0 bottom-0 z-20 border-t border-border bg-card md:hidden"
       >
-        <ul className="grid grid-cols-6">
+        <ul className="grid grid-cols-7">
           {mainNavigation.map((item) => (
             <li key={item.href}>
               <ShellLink href={item.href} pathname={pathname} layout="tab">
@@ -99,7 +99,7 @@ function ShellLink({
         layout === "row" &&
           "flex min-h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium",
         layout === "tab" &&
-          "flex min-h-11 w-full flex-col items-center justify-center gap-1 px-1 py-2 text-[10px] font-medium",
+          "flex min-h-11 w-full flex-col items-center justify-center gap-1 px-0.5 py-2 text-[9px] font-medium",
         active
           ? "text-foreground"
           : "text-[#9a9a9a] hover:text-foreground",

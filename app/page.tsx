@@ -38,7 +38,7 @@ export default function HomePage() {
             Find your people on campus.
           </h1>
           <p className="mt-3 max-w-[36ch] text-sm leading-5">
-            The Bubble helps verified students notice shared courses, interests, and campus
+            The Bubble helps students notice shared courses, interests, and campus
             days. It is not a dating app or an official university service.
           </p>
         </div>
@@ -49,9 +49,10 @@ export default function HomePage() {
           <Link href="/sign-in">Open the prototype</Link>
         </Button>
         <section aria-label="How it works" className="grid gap-3">
+          <p className="text-sm text-muted-foreground">How it works — these are illustrations, not interactive cards. Use “Open the prototype” to begin.</p>
           {steps.map((step) => (
             <article key={step.title} className="overflow-hidden rounded-[20px] bg-card shadow-[var(--shadow-card)] [--card-spacing:--spacing(4)]">
-              <PlaceholderArt bleed scene={step.scene} />
+              <div className="mx-auto max-w-[230px]"><PlaceholderArt bleed={false} scene={step.scene} /></div>
               <div className="px-4 pb-4">
               <h2 className="text-base font-semibold">{step.title}</h2>
               <p className="mt-1 text-sm leading-5 text-muted-foreground">{step.body}</p>
@@ -61,10 +62,10 @@ export default function HomePage() {
         </section>
         <section aria-labelledby="privacy-heading">
           <h2 id="privacy-heading" className="text-base font-semibold">
-            Private unless you opt in
+            Privacy and participation
           </h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-5 text-muted-foreground">
-            <li>Your university email is never shown on a profile.</li>
+            <li>The prototype does not display your university email publicly. It is not a production authentication system.</li>
             <li>Discovery is off until you turn it on.</li>
             <li>Campus days stay hidden. Overlap can be mentioned only with consent.</li>
             <li>A verified email is not proof of identity or course enrolment.</li>
